@@ -6,8 +6,8 @@
  */
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 
-const input = process.argv[2] ?? "shclock12.bas";
-const output = process.argv[3] ?? "build/shclock12-optimized.bas";
+const input = process.argv[2] ?? "shclock12.prg";
+const output = process.argv[3] ?? "basic/shclock12-optimized.prg";
 const prg = readFileSync(input);
 if (prg.readUInt16LE(0) !== 0x0801) throw new Error("Expected a C64 BASIC PRG at $0801");
 

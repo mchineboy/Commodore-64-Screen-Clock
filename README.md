@@ -5,9 +5,9 @@ Hardison in 2026. It can display the time as large seven-segment digits or a
 dot-matrix clock, with themes, colours, user text, and a small amount of
 burn-in protection.
 
-The original program lives in [`shclock12.bas`](shclock12.bas). Despite its
-`.bas` extension, it is a **tokenized C64 BASIC V2 PRG** (load address `$0801`),
-not a plain-text source file. It should be loaded directly by a C64 or emulator.
+The original program lives in [`shclock12.prg`](shclock12.prg). It is a
+**tokenized C64 BASIC V2 PRG** (load address `$0801`), not a plain-text source
+file. It should be loaded directly by a C64 or emulator.
 
 ## What it needs
 
@@ -24,11 +24,11 @@ will wait at startup instead of guessing the current time.
 
 ## Running the original
 
-In VICE, attach or autostart `shclock12.bas`, then run it. On a real C64, copy
+In VICE, attach or autostart `shclock12.prg`, then run it. On a real C64, copy
 the file to a disk and use:
 
 ```basic
-LOAD"SHCLOCK12.BAS",8,1
+LOAD"SHCLOCK12.PRG",8,1
 RUN
 ```
 
@@ -71,7 +71,7 @@ the custom text. It does not save the current time.
 ## Documented, optimized BASIC edition
 
 The original is preserved unchanged. The optimized edition is generated as
-[`basic/shclock12-optimized.bas`](basic/shclock12-optimized.bas), with a
+[`basic/shclock12-optimized.prg`](basic/shclock12-optimized.prg), with a
 human-reviewable [listing](basic/shclock12-optimized.list).
 
 It changes only startup overhead and documentation:

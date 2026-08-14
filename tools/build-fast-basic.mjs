@@ -16,6 +16,7 @@ function readLines(prg) {
   for (let pos = 2; pos + 4 <= prg.length;) {
     const next = prg.readUInt16LE(pos);
     const number = prg.readUInt16LE(pos + 2);
+    if (!next && !number) break;   // zero link word: end-of-program marker
     let end = pos + 4;
     while (end < prg.length && prg[end] !== 0) end++;
     if (end === prg.length) throw new Error(`Unterminated BASIC line ${number}`);
@@ -40,17 +41,20 @@ function compileLines(source) {
 
 function encode(lines) {
   lines.sort((a, b) => a.number - b.number);
+  // Every link points at the following record, and the program ends with a zero
+  // link word, exactly as a C64 SAVE writes it. petcat stops listing early
+  // without that terminator.
   let address = 0x0801;
-  const records = lines.map((line, index) => {
+  const records = lines.map((line) => {
     const size = 5 + line.body.length;
     const record = Buffer.alloc(size);
-    record.writeUInt16LE(index + 1 === lines.length ? 0 : address + size, 0);
+    record.writeUInt16LE(address + size, 0);
     record.writeUInt16LE(line.number, 2);
     line.body.copy(record, 4);
     address += size;
     return record;
   });
-  return Buffer.concat([Buffer.from([1, 8]), ...records]);
+  return Buffer.concat([Buffer.from([1, 8]), ...records, Buffer.alloc(2)]);
 }
 
 const replacementSource = `

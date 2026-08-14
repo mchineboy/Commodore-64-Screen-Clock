@@ -15,6 +15,7 @@ const lines = [];
 for (let pos = 2; pos + 4 <= prg.length;) {
   const next = prg.readUInt16LE(pos);
   const number = prg.readUInt16LE(pos + 2);
+  if (!next && !number) break;   // zero link word: end-of-program marker
   let end = pos + 4;
   while (end < prg.length && prg[end] !== 0) end++;
   if (end === prg.length) throw new Error(`Unterminated BASIC line ${number}`);
@@ -37,18 +38,20 @@ lines.push(
 );
 lines.sort((a, b) => a.number - b.number);
 
+// Every link points at the following record, and the program ends with a zero
+// link word, exactly as a C64 SAVE writes it. petcat stops listing early
+// without that terminator.
 let address = 0x0801;
 const records = [];
-for (let index = 0; index < lines.length; index++) {
-  const line = lines[index];
+for (const line of lines) {
   const size = 2 + 2 + line.body.length + 1;
-  const next = index + 1 === lines.length ? 0 : address + size;
   const record = Buffer.alloc(size);
-  record.writeUInt16LE(next, 0);
+  record.writeUInt16LE(address + size, 0);
   record.writeUInt16LE(line.number, 2);
   line.body.copy(record, 4);
   records.push(record);
   address += size;
 }
+records.push(Buffer.alloc(2));
 mkdirSync(output.slice(0, output.lastIndexOf("/")), { recursive: true });
 writeFileSync(output, Buffer.concat([prg.subarray(0, 2), ...records]));

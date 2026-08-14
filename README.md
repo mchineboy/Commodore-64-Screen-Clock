@@ -114,6 +114,16 @@ This is deliberately a separate PRG. The documented edition remains the closest
 possible rendition of Dad's original, while the fast edition makes a measurable
 runtime tradeoff without removing a feature.
 
+### Hybrid BASIC edition
+
+`make hybrid` creates `basic/shclock12-hybrid.prg`. It retains the fast BASIC
+edition's timer and user interface, then installs a 412-byte 6502 helper at
+`$C000` when the program starts. For the segment-clock themes only, BASIC passes
+the already-calculated segment characters, colours, position, and burn-protection
+offset to that helper with `SYS 49152`. The helper writes the 62 screen and colour
+RAM cells directly. Dot-matrix themes deliberately keep Dad's original BASIC
+renderer, so this is an incremental experiment rather than the full assembly port.
+
 ## Repository and pull-request workflow
 
 This project intentionally uses a fork so that changes can be reviewed as

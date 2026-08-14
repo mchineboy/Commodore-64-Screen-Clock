@@ -8,6 +8,7 @@ import { spawnSync } from "node:child_process";
 
 const input = process.argv[2] ?? "shclock12.prg";
 const output = process.argv[3] ?? "basic/shclock12-fast.prg";
+const helperPath = process.argv[4];
 
 function readLines(prg) {
   if (prg.readUInt16LE(0) !== 0x0801) throw new Error("Expected a C64 BASIC PRG at $0801");
@@ -63,6 +64,22 @@ const replacementSource = `
 401 pokey+f,val(chr$(peek(l+6)))+48:pokev+f,n
 `;
 const replacement = new Map(compileLines(replacementSource).map((line) => [line.number, line]));
+let helperLines = [];
+if (helperPath) {
+  const bytes = [...readFileSync(helperPath)];
+  const data = [];
+  for (let index = 0, line = 3090; index < bytes.length; index += 12, line += 10) {
+    data.push(`${line} data${bytes.slice(index, index + 12).join(",")}`);
+  }
+  helperLines = compileLines([
+    "175 gosub3080",
+    "650 poke49920,b:poke49921,f+128:poke49922,q:poke49923,r:poke49924,s1:poke49925,s2:poke49926,s3:poke49927,s4:poke49928,s5:poke49929,s6:poke49930,s7:sys49152:goto330",
+    `3080 forxx=0to${bytes.length - 1}:readdd:poke49152+xx,dd:next:return`,
+    ...data,
+    ""
+  ].join("\n"));
+  for (const line of helperLines) if (line.number < 3080) replacement.set(line.number, line);
+}
 const original = readLines(readFileSync(input));
 const outputLines = original
   .filter((line) => line.number !== 110 && line.number !== 120)
@@ -71,6 +88,8 @@ const outputLines = original
 outputLines.push(
   replacement.get(235), replacement.get(241), replacement.get(401)
 );
+if (helperLines.length) outputLines.push(helperLines.find((line) => line.number === 175));
+outputLines.push(...helperLines.filter((line) => line.number >= 3080));
 
 const rem = (number, text) => ({ number, body: Buffer.from([0x8f, 0x20, ...Buffer.from(text, "ascii")]) });
 outputLines.push(

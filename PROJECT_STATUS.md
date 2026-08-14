@@ -25,7 +25,7 @@ order. Merge them in order (or rebase later PRs once their parents merge).
 | --- | --- | --- | --- |
 | [#1](https://github.com/Hardison1958/Commodore-64-Screen-Clock/pull/1) | `codex/rename-basic-file` | Rename the tokenized C64 program to the accurate `.prg` extension. | Draft; ready for review. |
 | [#2](https://github.com/Hardison1958/Commodore-64-Screen-Clock/pull/2) | `codex/basic-optimization` | Documented BASIC edition, project README, and safe cleanup. | Draft; depends on #1. |
-| [#3](https://github.com/Hardison1958/Commodore-64-Screen-Clock/pull/3) | `codex/basic-fast-path` | Jiffy-throttled pure-BASIC fast edition. | Draft; depends on #1–#2. |
+| [#3](https://github.com/Hardison1958/Commodore-64-Screen-Clock/pull/3) | `codex/basic-fast-path` | Pure-BASIC fast edition: redraw only when the second changes. | Draft; depends on #1–#2. See the line 235 note below. |
 | [#4](https://github.com/Hardison1958/Commodore-64-Screen-Clock/pull/4) | `codex/basic-hybrid-renderer` | Hybrid BASIC + 6502 segment renderer experiment. | Draft; close, but not yet correct. |
 
 ## Files and versions
@@ -53,12 +53,27 @@ order. Merge them in order (or rebase later PRs once their parents merge).
 
 ### Fast BASIC edition
 
-* The original tight display loop was changed to wait for the next `TI` jiffy.
-* Colon animation is evaluated every jiffy.
 * Expensive time formatting and digit comparisons run only when `TI$` changes,
-  normally once per second.
-* This edition initially had a conditional-flow bug in C64 BASIC `IF ... THEN`
-  syntax and an overly fast/slow blink tuning issue; both were corrected.
+  normally once per second. This is the real saving in this edition.
+* The default colon blink rate is `17`, measured on the real C64 as the closest
+  available value to a one-second cycle. Line 340 compares `p>i` directly; the
+  original compared `p>i*15`. The `:` command still overrides it at runtime, and
+  a saved theme restores whatever rate it stored (line 1500 writes `i`).
+* **Line 235 does not actually throttle anything.** It reads
+  `235 ifti=ltthen235:lt=ti`. In CBM BASIC `THEN <line>` is a `GOTO`, so when the
+  condition is true control jumps away and `lt=ti` never runs; when it is false
+  the rest of the line is skipped and `lt=ti` never runs either. `lt` keeps its
+  initial `-1`, `ti=lt` is never true, and the loop free-runs. Measured in VICE
+  with `10 ti$="000000" : 20 lt=-1:c=0 : 40 ifti=ltthen40:lt=ti :
+  50 c=c+1:ifc<200then40 : 60 print lt,ti,c` — result `lt=-1`, 200 iterations in
+  138 jiffies. A throttled loop would need at least 200. The `lt=-1` result is
+  timing-independent, and warp mode does not affect it (137 jiffies with warp,
+  138 without).
+* This is the same `IF ... THEN` conditional-flow trap that was already fixed
+  once elsewhere in this edition; line 235 was missed.
+* Fixing line 235 would change how fast `p` increments and therefore invalidate
+  the measured blink default of 17. Do not fix it and keep 17 — recalibrate the
+  blink rate in the same change, on hardware.
 * A VIC-screen-blanking experiment was tried and then removed because the flash
   was distracting.
 
@@ -79,7 +94,7 @@ Fixed issues so far:
    now target screen RAM `$0541`–`$06AE` and color RAM `$D941`–`$DAAE`.
 3. The helper preserves temporary zero-page pointers and masks IRQs while using
    them.
-4. Hybrid blink timing now uses a stable 30-jiffy default.
+4. Hybrid and fast editions share the colon blink default of `17`.
 5. **The "segments look wrong" report is explained and fixed.** The two
    right-hand vertical segments were one column too far left. BASIC line 670/680
    writes them at `v1+x+6` and `v2+x+6`, which are screen `$0547` and `$060F`;

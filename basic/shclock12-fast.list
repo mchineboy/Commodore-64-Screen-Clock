@@ -10,7 +10,7 @@
   160 ta$="120000":tb$="130000":tc$="005959"
   170 e$="":rem shclock12
   180 f$=chr$(13):zb$="y":gosub1750
-  190 i=30:goto210
+  190 i=17:goto210
   200 i=2
   210 pokec1,e:pokec2,cs:poke53272,21:poke657,128:goto1090
   220 printchr$(147):x=11:z(.)=x:z(1)=x:z(2)=x:z(3)=x:lt=-1:ch=1:o$=""

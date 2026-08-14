@@ -101,13 +101,13 @@ creates the listing used for code review.
 themes, saved settings, RTC synchronization, and display formats, but aggressively
 reduces work in the live display loop:
 
-* The main loop waits for the next C64 jiffy (1/60 second on NTSC; 1/50 on PAL)
-  before it updates. Keyboard response remains within one jiffy.
-* The blinking colon is evaluated each jiffy. The fast editions use a default
-  setting of 30, which produces a comfortable roughly one-second full cycle.
 * Time formatting, screen printing, digit comparison, and segment redraw checks
   occur only when `TI$` changes: once per displayed second, rather than in every
-  tight-loop pass.
+  tight-loop pass. This is where the saving comes from.
+* The blinking colon uses a default rate of 17, measured on a real C64 as the
+  closest available value to a one-second cycle. The `:` command changes it at
+  any time, and a saved theme restores the rate it was saved with.
+* Keyboard response stays within one pass of the display loop.
 
 This is deliberately a separate PRG. The documented edition remains the closest
 possible rendition of Dad's original, while the fast edition makes a measurable

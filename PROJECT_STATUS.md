@@ -111,13 +111,24 @@ order. Merge them in order (or rebase later PRs once their parents merge).
   | `p=ti` (resync) | 145 | 120 |
   | `p=p+i` (grid) | 124 | 120 |
 
-  And on the real program: colon on at *t* and *t*+12.5 jiffies, off at *t*+25 —
-  a 25-jiffy half-period, matching the value `peek(678)` selects under VICE.
+  And on the real program with `i=55`: 55 toggles across 2984 jiffies, an
+  average of **55.26 jiffies per state**, 0.5% off nominal. `i` really is
+  jiffies per state.
 
-* **The default adapts to the machine:** `190 i=30-5*peek(678)`. The KERNAL
-  stores 0 for NTSC and 1 for PAL at `$02A6`, giving `i=30` (60-jiffy cycle at
-  60 Hz) or `i=25` (50-jiffy cycle at 50 Hz). Both are 1.00 second, so the build
-  no longer needs to know which machine it will run on.
+* **The default adapts to the machine:** `190 i=66-11*peek(678)`. The KERNAL
+  stores 0 for NTSC and 1 for PAL at `$02A6`, giving `i=66` at 60 Hz or `i=55`
+  at 50 Hz. Both are 1.1 seconds per state and a 2.2-second full cycle, which is
+  the rate chosen by eye on the PAL emulator. The build no longer needs to know
+  which machine it will run on.
+
+* **Measurement note for anyone re-checking this.** VICE does not replay an
+  identical trajectory across separate invocations — autostart and `-keybuf`
+  injection do not land on the same emulated cycle every time. Comparing two
+  runs stopped at different `-limitcycles` values therefore produces nonsense,
+  and running several instances in parallel produces blank frames. Every timing
+  number above comes from a **single run** with the count computed inside the
+  program and printed to the screen. Do not measure this by diffing screenshots
+  from separate runs.
 * The `:` command still overrides the rate at runtime, and a saved theme restores
   whatever rate it stored, since line 1500 writes `i`. Its units changed from
   loop passes to jiffies, so a theme saved by an older build will blink at a

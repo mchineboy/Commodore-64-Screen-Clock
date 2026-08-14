@@ -50,7 +50,7 @@ The first screen is a title/help page. Press any key to start the clock. Press
 | `W` / `E` | Set an optional text message (up to 30 characters) / its colour. |
 | `P` | Turn screen burn protection on or off (`Y` / `N`). |
 | `Z` | Show or hide a leading zero (`Y` / `N`). |
-| `:` | Set the blinking-colon rate, from 0 (static) to 255. In the fast and hybrid editions this is jiffies per half-cycle, so 30 blinks once a second on NTSC and 25 does on PAL. |
+| `:` | Set the blinking-colon rate, from 0 (static) to 255. In the fast and hybrid editions this is jiffies per state, so the colon is on for `rate` jiffies and off for `rate` jiffies. |
 | `*` / `@` | Set the segment character / its colour. |
 | `H` / `V` | Set the horizontal / vertical segment character. These controls are for segment themes. |
 | `S` / `L` | Save / load a custom theme on device 8. |
@@ -110,9 +110,10 @@ reduces work in the live display loop:
 * The blinking colon is timed from the `TI` clock rather than by counting loop
   passes, so its rate does not change when the loop gets busier. The rate is
   **jiffies per half-cycle**, making a full on/off cycle `2 * rate` jiffies.
-  The default is chosen from the KERNAL's PAL/NTSC flag at `$02A6`: 30 on NTSC
-  and 25 on PAL, both one second. The `:` command changes it at any time, and a
-  saved theme restores the rate it was saved with.
+  The default is chosen from the KERNAL's PAL/NTSC flag at `$02A6`: 66 on NTSC
+  and 55 on PAL, both 1.1 seconds per state and a 2.2-second full cycle. The `:`
+  command changes it at any time, and a saved theme restores the rate it was
+  saved with.
 
   The rate's units changed in this edition. A theme saved by an older build will
   blink at a different rate until you re-save it.

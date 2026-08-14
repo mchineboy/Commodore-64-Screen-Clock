@@ -15,12 +15,12 @@ function readLines(prg) {
   const lines = [];
   for (let pos = 2; pos + 4 <= prg.length;) {
     const next = prg.readUInt16LE(pos);
-    if (!next) break;
     const number = prg.readUInt16LE(pos + 2);
     let end = pos + 4;
     while (end < prg.length && prg[end] !== 0) end++;
     if (end === prg.length) throw new Error(`Unterminated BASIC line ${number}`);
     lines.push({ number, body: prg.subarray(pos + 4, end) });
+    if (!next) break;
     pos = next - 0x0801 + 2;
   }
   return lines;
@@ -76,6 +76,7 @@ if (helperPath) {
     "650 poke49920,b:poke49921,f+128:poke49922,q:poke49923,r:poke49924,s1:poke49925,s2:poke49926,s3:poke49927,s4:poke49928,s5:poke49929,s6:poke49930,s7:sys49152:goto330",
     `3080 forxx=0to${bytes.length - 1}:readdd:poke49152+xx,dd:next:return`,
     ...data,
+    "3440 rem end of segment blitter data",
     ""
   ].join("\n"));
   for (const line of helperLines) if (line.number < 3080) replacement.set(line.number, line);

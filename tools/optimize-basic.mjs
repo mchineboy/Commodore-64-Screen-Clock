@@ -14,7 +14,6 @@ if (prg.readUInt16LE(0) !== 0x0801) throw new Error("Expected a C64 BASIC PRG at
 const lines = [];
 for (let pos = 2; pos + 4 <= prg.length;) {
   const next = prg.readUInt16LE(pos);
-  if (next === 0) break;
   const number = prg.readUInt16LE(pos + 2);
   let end = pos + 4;
   while (end < prg.length && prg[end] !== 0) end++;
@@ -22,6 +21,7 @@ for (let pos = 2; pos + 4 <= prg.length;) {
   // These two DIM statements declare only scalars. BASIC V2 creates scalar
   // variables automatically, so removing them saves program bytes and startup.
   if (number !== 110 && number !== 120) lines.push({ number, body: prg.subarray(pos + 4, end) });
+  if (next === 0) break;
   pos = next - 0x0801 + 2;
 }
 

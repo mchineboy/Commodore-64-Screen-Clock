@@ -103,9 +103,8 @@ reduces work in the live display loop:
 
 * The main loop waits for the next C64 jiffy (1/60 second on NTSC; 1/50 on PAL)
   before it updates. Keyboard response remains within one jiffy.
-* The blinking colon is still evaluated each jiffy.
-  Its setting is multiplied by 15 so the inherited default of `2` produces a
-  comfortable roughly one-second blink cycle instead of a 10 Hz flicker.
+* The blinking colon is evaluated each jiffy. The fast editions use a default
+  setting of 30, which produces a comfortable roughly one-second full cycle.
 * Time formatting, screen printing, digit comparison, and segment redraw checks
   occur only when `TI$` changes: once per displayed second, rather than in every
   tight-loop pass.

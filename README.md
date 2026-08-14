@@ -95,6 +95,23 @@ make basic
 their linked-list pointers, and writes a valid `$0801` PRG. `petcat -2` then
 creates the listing used for code review.
 
+### Fast BASIC edition
+
+`make fast` creates `basic/shclock12-fast.prg`. It keeps the original commands,
+themes, saved settings, RTC synchronization, and display formats, but aggressively
+reduces work in the live display loop:
+
+* The main loop waits for the next C64 jiffy (1/60 second on NTSC; 1/50 on PAL)
+  before it updates. Keyboard response remains within one jiffy.
+* The blinking colon is still evaluated each jiffy.
+* Time formatting, screen printing, digit comparison, and segment redraw checks
+  occur only when `TI$` changes: once per displayed second, rather than in every
+  tight-loop pass.
+
+This is deliberately a separate PRG. The documented edition remains the closest
+possible rendition of Dad's original, while the fast edition makes a measurable
+runtime tradeoff without removing a feature.
+
 ## Repository and pull-request workflow
 
 This project intentionally uses a fork so that changes can be reviewed as

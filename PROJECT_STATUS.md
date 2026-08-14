@@ -55,25 +55,45 @@ order. Merge them in order (or rebase later PRs once their parents merge).
 
 * Expensive time formatting and digit comparisons run only when `TI$` changes,
   normally once per second. This is the real saving in this edition.
-* The default colon blink rate is `17`, measured on the real C64 as the closest
-  available value to a one-second cycle. Line 340 compares `p>i` directly; the
-  original compared `p>i*15`. The `:` command still overrides it at runtime, and
-  a saved theme restores whatever rate it stored (line 1500 writes `i`).
-* **Line 235 does not actually throttle anything.** It reads
-  `235 ifti=ltthen235:lt=ti`. In CBM BASIC `THEN <line>` is a `GOTO`, so when the
-  condition is true control jumps away and `lt=ti` never runs; when it is false
-  the rest of the line is skipped and `lt=ti` never runs either. `lt` keeps its
-  initial `-1`, `ti=lt` is never true, and the loop free-runs. Measured in VICE
-  with `10 ti$="000000" : 20 lt=-1:c=0 : 40 ifti=ltthen40:lt=ti :
-  50 c=c+1:ifc<200then40 : 60 print lt,ti,c` — result `lt=-1`, 200 iterations in
-  138 jiffies. A throttled loop would need at least 200. The `lt=-1` result is
-  timing-independent, and warp mode does not affect it (137 jiffies with warp,
-  138 without).
-* This is the same `IF ... THEN` conditional-flow trap that was already fixed
-  once elsewhere in this edition; line 235 was missed.
-* Fixing line 235 would change how fast `p` increments and therefore invalidate
-  the measured blink default of 17. Do not fix it and keep 17 — recalibrate the
-  blink rate in the same change, on hardware.
+* **The jiffy throttle was broken and is now fixed.** The single line
+  `235 ifti=ltthen235:lt=ti` never waited. In CBM BASIC `THEN <line>` is a
+  `GOTO`, so when the condition was true control jumped away and `lt=ti` never
+  ran; when it was false the rest of the line was skipped and `lt=ti` never ran
+  either. `lt` kept its initial `-1`, `ti=lt` was never true, and the loop
+  free-ran. This is the same `IF ... THEN` trap that was fixed once elsewhere in
+  this edition; line 235 was missed. The wait is now split across two records:
+
+  ```basic
+  235 ifti=ltthen235
+  236 lt=ti
+  ```
+
+  Never put anything after `THEN <line>` on the same record.
+
+* Measured in VICE with a reduced case
+  (`20 ifti=ltthen20 : 25 lt=ti : 30 c=c+1:ifc<200then20`):
+
+  | build | result |
+  | --- | --- |
+  | before | `lt=-1`, 200 iterations in 138 jiffies |
+  | after | `lt=199`, 200 iterations in 200 jiffies |
+
+  Exactly one pass per jiffy now. The old `lt=-1` reading is timing-independent,
+  and warp mode did not affect it (137 jiffies with warp, 138 without).
+
+* **The blink default is now `29`, replacing the `17` that was calibrated
+  against the broken loop.** Line 340 compares `p>i` and resets on overflow, so
+  the colon toggles every `i+1` passes; with the throttle working that is `i+1`
+  jiffies, and a full on/off cycle is `2*(i+1)` jiffies. `i=29` gives a 60-jiffy
+  cycle: 1.00 s on NTSC, 1.20 s on PAL. Confirmed in VICE at 121 jiffies for four
+  toggles against a predicted 120, the extra jiffy being the initial partial one.
+  For a PAL machine use `i=24`.
+* Caveat for hardware calibration: once per second the heavy path runs (time
+  formatting, printing, digit comparison, segment redraw) and can overrun a
+  jiffy, so the observed cycle will be slightly longer than 60 jiffies. Confirm
+  `29` by eye on the real C64 and adjust if it drifts long.
+* The `:` command still overrides the rate at runtime, and a saved theme restores
+  whatever rate it stored, since line 1500 writes `i`.
 * A VIC-screen-blanking experiment was tried and then removed because the flash
   was distracting.
 

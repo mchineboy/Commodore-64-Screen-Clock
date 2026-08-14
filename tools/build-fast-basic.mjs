@@ -59,9 +59,10 @@ function encode(lines) {
 
 const replacementSource = `
 150 m=2:cc=c:bn$="y":bn=ti:d$="24 hour":dm=.:n=c:m1=3:m2=8:lt=-1:ch=1:o$=""
-190 i=17:goto210
+190 i=29:goto210
 220 printchr$(147):x=11:z(.)=x:z(1)=x:z(2)=x:z(3)=x:lt=-1:ch=1:o$=""
-235 ifti=ltthen235:lt=ti
+235 ifti=ltthen235
+236 lt=ti
 240 t$=ti$:ch=t$<>o$:ifch=.then330
 241 o$=t$:poke646,e:onmgoto250,300,310,310
 340 p=p+1:ifp>ithenp=.:goto360
@@ -90,9 +91,11 @@ const original = readLines(readFileSync(input));
 const outputLines = original
   .filter((line) => line.number !== 110 && line.number !== 120)
   .map((line) => replacement.get(line.number) ?? line);
-// 235, 241, and 401 are new; the other replacement lines overwrite records.
+// 235, 236, 241, and 401 are new; the other replacement lines overwrite records.
+// 235 and 236 must stay separate: in CBM BASIC "THEN <line>" is a GOTO, so
+// anything after it on the same line is unreachable in both branches.
 outputLines.push(
-  replacement.get(235), replacement.get(241), replacement.get(401)
+  replacement.get(235), replacement.get(236), replacement.get(241), replacement.get(401)
 );
 if (helperLines.length) outputLines.push(helperLines.find((line) => line.number === 175));
 outputLines.push(...helperLines.filter((line) => line.number >= 3080));

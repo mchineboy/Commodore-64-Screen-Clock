@@ -106,6 +106,9 @@ reduces work in the live display loop:
 * The blinking colon is still evaluated each jiffy.
   Its setting is multiplied by 15 so the inherited default of `2` produces a
   comfortable roughly one-second blink cycle instead of a 10 Hz flicker.
+* When a large digit changes, the VIC display is temporarily disabled for the
+  complete redraw batch, then immediately restored. This does not reduce the
+  number of BASIC `POKE`s, but prevents partially drawn segments from appearing.
 * Time formatting, screen printing, digit comparison, and segment redraw checks
   occur only when `TI$` changes: once per displayed second, rather than in every
   tight-loop pass.

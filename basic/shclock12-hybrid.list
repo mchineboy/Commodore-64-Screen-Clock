@@ -11,7 +11,7 @@
   170 e$="":rem shclock12
   175 gosub3080
   180 f$=chr$(13):zb$="y":gosub1750
-  190 i=29:goto210
+  190 i=30-5*peek(678):goto210
   200 i=2
   210 pokec1,e:pokec2,cs:poke53272,21:poke657,128:goto1090
   220 printchr$(147):x=11:z(.)=x:z(1)=x:z(2)=x:z(3)=x:lt=-1:ch=1:o$=""
@@ -30,7 +30,9 @@
   310 printchr$(19)"      ":h=int(ti/s*g)
   320 printchr$(19)spc(m+4-len(str$(h)))h
   330 printchr$(19):ifi=.thenj=cc:goto380
-  340 p=p+1:ifp>ithenp=.:goto360
+  340 ifabs(ti-p)<ithen400
+  345 p=p+i:ifabs(ti-p)>ithenp=ti
+  346 goto360
   350 goto400
   360 ifj=ethenj=cc:goto380
   370 j=e

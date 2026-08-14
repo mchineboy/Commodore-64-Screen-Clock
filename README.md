@@ -50,7 +50,7 @@ The first screen is a title/help page. Press any key to start the clock. Press
 | `W` / `E` | Set an optional text message (up to 30 characters) / its colour. |
 | `P` | Turn screen burn protection on or off (`Y` / `N`). |
 | `Z` | Show or hide a leading zero (`Y` / `N`). |
-| `:` | Set the blinking-colon rate, from 0 (static) to 255. |
+| `:` | Set the blinking-colon rate, from 0 (static) to 255. In the fast and hybrid editions this is jiffies per half-cycle, so 30 blinks once a second on NTSC and 25 does on PAL. |
 | `*` / `@` | Set the segment character / its colour. |
 | `H` / `V` | Set the horizontal / vertical segment character. These controls are for segment themes. |
 | `S` / `L` | Save / load a custom theme on device 8. |
@@ -106,12 +106,16 @@ reduces work in the live display loop:
   tight-loop pass. This is where the saving comes from.
 * The main loop then waits for the next C64 jiffy (1/60 second on NTSC, 1/50 on
   PAL) before it updates again, so it runs one pass per jiffy instead of
-  spinning. Keyboard response stays within one jiffy.
-* The blinking colon toggles every `rate + 1` jiffies, so a full on/off cycle is
-  `2 * (rate + 1)` jiffies. The default is 29, giving a 60-jiffy cycle: 1.00
-  second on NTSC, 1.20 on PAL. Use 24 for a one-second cycle on PAL. The `:`
-  command changes it at any time, and a saved theme restores the rate it was
-  saved with.
+  spinning.
+* The blinking colon is timed from the `TI` clock rather than by counting loop
+  passes, so its rate does not change when the loop gets busier. The rate is
+  **jiffies per half-cycle**, making a full on/off cycle `2 * rate` jiffies.
+  The default is chosen from the KERNAL's PAL/NTSC flag at `$02A6`: 30 on NTSC
+  and 25 on PAL, both one second. The `:` command changes it at any time, and a
+  saved theme restores the rate it was saved with.
+
+  The rate's units changed in this edition. A theme saved by an older build will
+  blink at a different rate until you re-save it.
 
 This is deliberately a separate PRG. The documented edition remains the closest
 possible rendition of Dad's original, while the fast edition makes a measurable

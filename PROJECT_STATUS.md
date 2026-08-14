@@ -81,19 +81,50 @@ order. Merge them in order (or rebase later PRs once their parents merge).
   Exactly one pass per jiffy now. The old `lt=-1` reading is timing-independent,
   and warp mode did not affect it (137 jiffies with warp, 138 without).
 
-* **The blink default is now `29`, replacing the `17` that was calibrated
-  against the broken loop.** Line 340 compares `p>i` and resets on overflow, so
-  the colon toggles every `i+1` passes; with the throttle working that is `i+1`
-  jiffies, and a full on/off cycle is `2*(i+1)` jiffies. `i=29` gives a 60-jiffy
-  cycle: 1.00 s on NTSC, 1.20 s on PAL. Confirmed in VICE at 121 jiffies for four
-  toggles against a predicted 120, the extra jiffy being the initial partial one.
-  For a PAL machine use `i=24`.
-* Caveat for hardware calibration: once per second the heavy path runs (time
-  formatting, printing, digit comparison, segment redraw) and can overrun a
-  jiffy, so the observed cycle will be slightly longer than 60 jiffies. Confirm
-  `29` by eye on the real C64 and adjust if it drifts long.
+* **The colon blink is now driven by `TI`, not by a pass counter.** Counting
+  passes cannot give a stable rate on this program: the display loop body costs
+  more than one jiffy, so the blink period depends on how much work the loop
+  happens to be doing. That is why hand-calibrated values kept breaking — `17`
+  was tuned against the free-running loop and `29` against the throttled one,
+  and on hardware `29` produced a cycle longer than two seconds.
+
+  ```basic
+  340 ifabs(ti-p)<ithen400
+  345 p=p+i:ifabs(ti-p)>ithenp=ti
+  346 goto360
+  ```
+
+  `p` holds the jiffy stamp of the last toggle, so `i` now means **jiffies per
+  half-cycle** and a full on/off cycle is `2*i` jiffies regardless of loop speed.
+
+* `345` advances `p` by exactly `i` rather than resetting it to `ti`. Resetting
+  to `ti` re-anchors on an already-late reading, so the quantisation error is
+  re-added every toggle and the period drifts long. Advancing on a fixed grid
+  keeps the long-run average at `i`. The `ifabs(ti-p)>i thenp=ti` guard resyncs
+  if the loop stalls or `TI` wraps at midnight, which would otherwise leave the
+  colon strobing for hours while `p` caught up.
+
+* Measured in VICE, four toggles at `i=30` with a deliberately heavy loop body:
+
+  | line 345 | jiffies | target |
+  | --- | --- | --- |
+  | `p=ti` (resync) | 145 | 120 |
+  | `p=p+i` (grid) | 124 | 120 |
+
+  And on the real program: colon on at *t* and *t*+12.5 jiffies, off at *t*+25 —
+  a 25-jiffy half-period, matching the value `peek(678)` selects under VICE.
+
+* **The default adapts to the machine:** `190 i=30-5*peek(678)`. The KERNAL
+  stores 0 for NTSC and 1 for PAL at `$02A6`, giving `i=30` (60-jiffy cycle at
+  60 Hz) or `i=25` (50-jiffy cycle at 50 Hz). Both are 1.00 second, so the build
+  no longer needs to know which machine it will run on.
 * The `:` command still overrides the rate at runtime, and a saved theme restores
-  whatever rate it stored, since line 1500 writes `i`.
+  whatever rate it stored, since line 1500 writes `i`. Its units changed from
+  loop passes to jiffies, so a theme saved by an older build will blink at a
+  different rate until it is re-saved.
+* Note on keyboard latency: line 380 `gets$` sits on the toggle path, so the
+  keyboard is polled once per half-cycle rather than once per pass. That is the
+  original program's structure, not something these editions introduced.
 * A VIC-screen-blanking experiment was tried and then removed because the flash
   was distracting.
 

@@ -73,13 +73,14 @@ start:
   bcc :+
   inc base+1
 :
-  VSEG $0141, PARAM_S1
-  VSEG $0146, PARAM_S2
-  VSEG $0209, PARAM_S3
-  VSEG $020e, PARAM_S4
-  HSEG $011a, PARAM_S5
-  HSEG $01e2, PARAM_S6
-  HSEG $02aa, PARAM_S7
+  ; Absolute screen addresses: BASIC's L is $0400, so include that base.
+  VSEG $0541, PARAM_S1
+  VSEG $0546, PARAM_S2
+  VSEG $0609, PARAM_S3
+  VSEG $060e, PARAM_S4
+  HSEG $051a, PARAM_S5
+  HSEG $05e2, PARAM_S6
+  HSEG $06aa, PARAM_S7
 
   lda saved_zp
   sta $02

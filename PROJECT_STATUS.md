@@ -1,4 +1,4 @@
-# Project status — 2026-08-14
+# Project status — 2026-08-14 (updated)
 
 ## Goal
 
@@ -35,7 +35,8 @@ order. Merge them in order (or rebase later PRs once their parents merge).
 | `shclock12.prg` | Dad's preserved original tokenized BASIC V2 program. | Do not edit. |
 | `basic/shclock12-optimized.prg` | Original with section `REM`s and redundant scalar `DIM`s removed. | Builds and lists correctly. |
 | `basic/shclock12-fast.prg` | Pure-BASIC timed update loop. | The preferred optimized edition while hybrid is unfinished. |
-| `basic/shclock12-hybrid.prg` | Fast BASIC plus a 6502 segment-drawing helper. | Runs, but segment output still needs visual correction. |
+| `basic/shclock12-hybrid.prg` | Fast BASIC plus a 6502 segment-drawing helper. | Segment output now matches BASIC cell-for-cell; needs hardware confirmation. |
+| `tools/verify-blitter.mjs` | Interprets the helper and diffs its writes against the BASIC renderer. | 2112 cases pass. |
 | `assembly/segment-blitter.s` | Source for the hybrid helper. | Experimental; not a full assembly clock. |
 
 ## Confirmed behavior and findings
@@ -79,20 +80,55 @@ Fixed issues so far:
 3. The helper preserves temporary zero-page pointers and masks IRQs while using
    them.
 4. Hybrid blink timing now uses a stable 30-jiffy default.
+5. **The "segments look wrong" report is explained and fixed.** The two
+   right-hand vertical segments were one column too far left. BASIC line 670/680
+   writes them at `v1+x+6` and `v2+x+6`, which are screen `$0547` and `$060F`;
+   the helper used `$0546` and `$060E`, so those verticals landed inside the
+   five-cell horizontal bars instead of flanking them. The digit geometry is
+   columns 1 and 7 for the verticals, columns 2-6 for the bars.
+6. **The BASIC generators omitted the two-byte end-of-program marker.** Both
+   `optimize-basic.mjs` and `build-fast-basic.mjs` wrote a zero link word into
+   the *last line's* record instead of appending a zero link word *after* it.
+   That is not the form a C64 `SAVE` produces, and it has real consequences:
+   `petcat -2` stops listing before the final line, and BASIC treats the final
+   line as unreachable. In `shclock12-fast.prg` and `shclock12-optimized.prg`
+   the final line is `3070 return`, ending the colour-chart subroutine that
+   `2690 gosub2980` calls — so pressing a colour key (`C`, `@`, and any other
+   `w1=0` prompt) printed the chart and then dropped the clock to `READY.`
+   Verified in VICE with a minimal `gosub`/`return` pair built both ways: the
+   zero-link build prints `SUB` then `READY.`, the terminated build prints
+   `SUB` then `BACK`. The original `shclock12.prg` is correctly terminated and
+   was never affected.
 
-Remaining problem:
+### Hybrid equivalence test
 
-* The hybrid runs but its segment presentation does not yet match the original
-  visually. The latest screenshot showed a valid clock and no memory-corruption
-  symptoms, but the user reports the segments look wrong. Do **not** represent
-  PR #4 as ready to merge.
+`tools/verify-blitter.mjs` is the repeatable comparison the plan below asked
+for, without needing the RTC hardware in the loop. It interprets the real
+`assembly/segment-blitter.bin` on a small 6502 model, logs every store, and
+diffs the result against the BASIC lines 650-700 formulas over 2112 cases:
+6 character/colour themes (defaults, themes 5-8, custom `H`/`V`) x 8 burn
+offsets (`f` from lines 1350-1420) x 4 digit positions x 11 segment patterns
+(digits 0-9 plus the all-off leading-zero case). It fails on a wrong cell, a
+missing cell, a stray write outside the segment rectangles, or an unrestored
+`$02`-`$05`. `make hybrid` runs it before building; `make verify` runs it alone.
+It reproduces the off-by-one above as 67584 mismatches, so it is a real guard
+rather than a tautology.
+
+Remaining before PR #4 is merge-ready:
+
+* Confirm on the real C64/TeensyROM setup across all four segment themes,
+  custom characters/colours, leading-zero off, and every burn offset. VICE
+  cannot exercise the RTC path.
+* Regression-test the dot-matrix themes (9/0), which still use the BASIC path.
+* Measure whether the hybrid is actually worth keeping (see below).
 
 ## Build and validation commands
 
 ```sh
 make basic      # documented token-preserving BASIC version
 make fast       # pure BASIC performance version
-make hybrid     # compile helper and create hybrid PRG
+make verify     # helper output vs the BASIC renderer, 2112 cases
+make hybrid     # verify, compile helper, and create hybrid PRG
 petcat -2 -o /tmp/listing.txt basic/shclock12-hybrid.prg
 ```
 
@@ -102,25 +138,33 @@ the assembly source.
 
 ## Next-step plan
 
-### 1. Make hybrid output exactly match BASIC (highest priority)
+### 1. Confirm hybrid output on real hardware (highest priority)
 
-Do this before further speed work or the full assembly port.
+Steps 1–5 of the original plan are now covered by `make verify`, which compares
+the helper's writes against the BASIC renderer over every theme, burn offset,
+digit position, and segment pattern. What is left needs the real machine:
 
-1. Establish a repeatable comparison case: same RTC time, 24-hour mode, default
-   segment theme, no burn offset, and a known four-digit display.
-2. Capture screen RAM `$0400`–`$07E7` and color RAM `$D800`–`$DBE7` after that
-   case in both `shclock12-fast.prg` and `shclock12-hybrid.prg`.
-3. Compare only the seven segment rectangles. For each digit, verify the 62
-   expected character/color cells, and confirm that off segments retain `E`
-   while on segments use `C`.
-4. Validate parameter transfer at BASIC line 650: `B`, signed `F`, `Q`, `R`, and
-   `S1`–`S7` must agree with the helper's `$C300`–`$C30A` contract.
-5. Compare all four segment themes (5–8), custom `H`/`V` characters, custom
-   number/screen colours, leading-zero off, and every burn-protection offset.
-6. Keep dot-matrix themes (9/0) on the original BASIC path; regression-test
-   them after every hybrid change.
+1. Run `shclock12-hybrid.prg` on the C64/TeensyROM and step through segment
+   themes 5–8, custom `H`/`V` characters, custom number/screen colours,
+   leading-zero off, and every burn-protection offset.
+2. Regression-test the dot-matrix themes (9/0), which still use the BASIC path.
+3. Confirm the ~4 second startup cost of `175 gosub3080` (POKEing 414 helper
+   bytes from `DATA`) is acceptable, or move the helper into the PRG image.
 
-Only after these checks match should PR #4 be marked ready.
+Only after these checks should PR #4 be marked ready.
+
+Automated coverage that is already in place:
+
+```sh
+make verify                        # helper vs BASIC, 2112 cases
+x64sc -default -warp -autostart basic/shclock12-hybrid.prg \
+      -keybuf "  " -keybuf-delay 300 -limitcycles 60000000 \
+      -exitscreenshot /tmp/hybrid.png
+```
+
+VICE reaches the clock face because `PEEK(57014)` reads open bus (non-zero) and
+the RTC wait at line 30 falls through. The clock therefore starts near 00:00 and
+the RTC path itself is *not* exercised — that still needs hardware.
 
 ### 2. Measure the hybrid benefit
 
@@ -155,6 +199,11 @@ option, not a replacement.
   its BASIC line records rather than de-tokenizing and re-tokenizing PETSCII art.
 * The original code has meaningful final BASIC records. The generator bug showed
   that a line whose next-pointer is zero is still a valid line and must be parsed.
+* A generated PRG must end the way `SAVE` ends one: every line link points at the
+  following record, and a zero link word follows the last record. Putting the
+  zero inside the last line's link instead makes that line unreachable and makes
+  `petcat -2` truncate its listing — so a listing that looks fine can be hiding a
+  dropped line. Check the tail of any new generator's output.
 * Do not use a full-screen blank as a redraw mask; the user found it distracting.
 * Ask for screenshots from the real C64/TeensyROM setup when visual behavior
   differs from VICE. The RTC hardware path makes automated end-to-end testing

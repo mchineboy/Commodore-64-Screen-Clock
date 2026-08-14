@@ -1,4 +1,4 @@
-.PHONY: basic fast hybrid clean
+.PHONY: basic fast hybrid verify clean
 
 basic: basic/shclock12-optimized.prg
 
@@ -18,7 +18,11 @@ assembly/segment-blitter.bin: assembly/segment-blitter.s assembly/segment-blitte
 	ca65 -o /tmp/segment-blitter.o assembly/segment-blitter.s
 	ld65 -C assembly/segment-blitter.cfg -o $@ /tmp/segment-blitter.o
 
-basic/shclock12-hybrid.prg: shclock12.prg tools/build-fast-basic.mjs assembly/segment-blitter.bin
+verify: assembly/segment-blitter.bin
+	node tools/verify-blitter.mjs $<
+
+basic/shclock12-hybrid.prg: shclock12.prg tools/build-fast-basic.mjs assembly/segment-blitter.bin tools/verify-blitter.mjs
+	node tools/verify-blitter.mjs assembly/segment-blitter.bin
 	node tools/build-fast-basic.mjs $< $@ assembly/segment-blitter.bin
 	petcat -2 -o basic/shclock12-hybrid.list $@
 

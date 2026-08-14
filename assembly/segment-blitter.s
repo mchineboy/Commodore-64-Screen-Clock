@@ -74,10 +74,12 @@ start:
   inc base+1
 :
   ; Absolute screen addresses: BASIC's L is $0400, so include that base.
+  ; BASIC line 670/680: the right-hand verticals sit at v1+x+6 and v2+x+6,
+  ; i.e. six columns right of the left verticals, flanking the five-cell bars.
   VSEG $0541, PARAM_S1
-  VSEG $0546, PARAM_S2
+  VSEG $0547, PARAM_S2
   VSEG $0609, PARAM_S3
-  VSEG $060e, PARAM_S4
+  VSEG $060f, PARAM_S4
   HSEG $051a, PARAM_S5
   HSEG $05e2, PARAM_S6
   HSEG $06aa, PARAM_S7

@@ -40,6 +40,7 @@ PARAM_S7    = $c30a
 .endmacro
 
 start:
+  sei                    ; do not let an IRQ observe our temporary ZP pointers
   lda $02
   sta saved_zp
   lda $03
@@ -88,6 +89,7 @@ start:
   sta $04
   lda saved_zp+3
   sta $05
+  cli
   rts
 
 set_pointer:

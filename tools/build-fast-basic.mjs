@@ -56,16 +56,18 @@ const replacementSource = `
 150 m=2:cc=c:bn$="y":bn=ti:d$="24 hour":dm=.:n=c:m1=3:m2=8:lt=-1:ch=1:o$=""
 220 printchr$(147):x=11:z(.)=x:z(1)=x:z(2)=x:z(3)=x:lt=-1:ch=1:o$=""
 235 ifti=ltthen235:lt=ti
-240 t$=ti$:ch=t$<>o$:ifch=.then330:o$=t$:poke646,e:onmgoto250,300,310,310
-400 ifch=.then460:pokey+f,val(chr$(peek(l+6)))+48:pokev+f,n
+240 t$=ti$:ch=t$<>o$:ifch=.then330
+241 o$=t$:poke646,e:onmgoto250,300,310,310
+400 ifch=.then460
+401 pokey+f,val(chr$(peek(l+6)))+48:pokev+f,n
 `;
 const replacement = new Map(compileLines(replacementSource).map((line) => [line.number, line]));
 const original = readLines(readFileSync(input));
 const outputLines = original
   .filter((line) => line.number !== 110 && line.number !== 120)
   .map((line) => replacement.get(line.number) ?? line);
-// 235 is new; the other replacement lines overwrite existing records.
-outputLines.push(replacement.get(235));
+// 235, 241, and 401 are new; the other replacement lines overwrite records.
+outputLines.push(replacement.get(235), replacement.get(241), replacement.get(401));
 
 const rem = (number, text) => ({ number, body: Buffer.from([0x8f, 0x20, ...Buffer.from(text, "ascii")]) });
 outputLines.push(

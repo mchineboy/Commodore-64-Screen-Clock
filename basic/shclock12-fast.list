@@ -17,7 +17,8 @@
   230 poke214,18:print:poke211,0:printspc(82+f);:poke646,n1:printe$:poke646,n
   234 rem wait for next jiffy; format the clock once per second
   235 ifti=ltthen235:lt=ti
-  240 t$=ti$:ch=t$<>o$:ifch=.then330:o$=t$:poke646,e:onmgoto250,300,310,310
+  240 t$=ti$:ch=t$<>o$:ifch=.then330
+  241 o$=t$:poke646,e:onmgoto250,300,310,310
   250 ift$<ta$thend$="     am":goto270
   260 d$="     pm"
   270 ift$<tb$thenift$>tc$then300
@@ -33,7 +34,8 @@
   370 j=e
   380 gets$:ifs$>""then720
   390 pokel+o+f,k:pokel+t+f,k:pokez+o+f,j:pokez+t+f,j
-  400 ifch=.then460:pokey+f,val(chr$(peek(l+6)))+48:pokev+f,n
+  400 ifch=.then460
+  401 pokey+f,val(chr$(peek(l+6)))+48:pokev+f,n
   410 pokew+f,val(chr$(peek(l+5)))+48:pokeu+f,n
   420 forb=3to.step-1
   430 ifz(b)=10thenz(b)=val(chr$(peek(l+1+b)))

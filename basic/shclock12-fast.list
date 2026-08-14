@@ -28,7 +28,7 @@
   310 printchr$(19)"      ":h=int(ti/s*g)
   320 printchr$(19)spc(m+4-len(str$(h)))h
   330 printchr$(19):ifi=.thenj=cc:goto380
-  340 p=p+1:ifp>ithenp=.:goto360
+  340 p=p+1:ifp>i*15thenp=.:goto360
   350 goto400
   360 ifj=ethenj=cc:goto380
   370 j=e

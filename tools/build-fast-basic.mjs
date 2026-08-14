@@ -58,6 +58,7 @@ const replacementSource = `
 235 ifti=ltthen235:lt=ti
 240 t$=ti$:ch=t$<>o$:ifch=.then330
 241 o$=t$:poke646,e:onmgoto250,300,310,310
+340 p=p+1:ifp>i*15thenp=.:goto360
 400 ifch=.then460
 401 pokey+f,val(chr$(peek(l+6)))+48:pokev+f,n
 `;

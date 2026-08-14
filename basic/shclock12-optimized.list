@@ -1,0 +1,306 @@
+   10 rem synch c64 time to teensyrom rtc
+   20 poke 57012,12:rem tell tr to load the time
+   30 if peek(57014)=0 then 30:rem wait for tr, maybe not needed in basic
+   40 for a=0 to 2:poke160+a,peek(57018):next: rem set ti/ti$
+   90 rem startup: teensyrom rtc -> c64 ti clock
+  100 rem save"shclock12",8,1
+  130 g=694.444444:c2=53280:c1=53281:u=56172:v=56173:w=1900:y=1901:l=1024:n1=11
+  140 z=55296:q=224:r=224:c=13:s=3600:k=81:cp=13:j=e:o=419:t=579:cs=.:j1=50000
+  150 m=2:cc=c:bn$="y":bn=ti:d$="24 hour":dm=.:n=c:m1=3:m2=8
+  160 ta$="120000":tb$="130000":tc$="005959"
+  170 e$="":rem shclock12
+  180 f$=chr$(13):zb$="y":gosub1750
+  190 ifchr$(peek(2067))="b"theni=10:goto210
+  200 i=2
+  210 pokec1,e:pokec2,cs:poke53272,21:poke657,128:goto1090
+  215 rem main display loop: time, input, and blinking colon
+  220 printchr$(147):x=11:z(.)=x:z(1)=x:z(2)=x:z(3)=x
+  230 poke214,18:print:poke211,0:printspc(82+f);:poke646,n1:printe$:poke646,n
+  240 poke646,e:t$=ti$:onmgoto250,300,310,310
+  250 ift$<ta$thend$="     am":goto270
+  260 d$="     pm"
+  270 ift$<tb$thenift$>tc$then300
+  280 t$=str$(val(left$(t$,2))-12)+right$(ti$,4)
+  290 printchr$(19)spc(7-len(t$))t$:goto330
+  300 printchr$(19)" "t$:goto330
+  310 printchr$(19)"      ":h=int(ti/s*g)
+  320 printchr$(19)spc(m+4-len(str$(h)))h
+  330 printchr$(19):ifi=.thenj=cc:goto380
+  340 p=p+1:ifp>ithenp=.:goto360
+  350 goto400
+  360 ifj=ethenj=cc:goto380
+  370 j=e
+  380 gets$:ifs$>""then720
+  390 pokel+o+f,k:pokel+t+f,k:pokez+o+f,j:pokez+t+f,j
+  400 pokey+f,val(chr$(peek(l+6)))+48:pokev+f,n
+  410 pokew+f,val(chr$(peek(l+5)))+48:pokeu+f,n
+  420 forb=3to.step-1
+  430 ifz(b)=10thenz(b)=val(chr$(peek(l+1+b)))
+  440 ifz(b)<>val(chr$(peek(l+1+b)))thenz(b)=10:goto470
+  450 next
+  460 goto240
+  470 ifbn$="y"thenifabs(ti-bn)>j1thenbn=ti:goto1330
+  480 a=val(chr$(peek(l+1+b)))+1
+  490 printchr$(19):poke646,n:printspc(111+f)d$;
+  500 poke646,c:ifdm=.then530
+  510 d=b*9+m1:poke214,m2:print:poke211,.
+  520 onagoto1900,2050,2120,2190,2260,2330,2400,2470,2540,2610
+  530 onagoto540,560,570,580,590,600,610,620,630,640
+  540 ifb=.thenifzb$="n"thens1=e:s2=e:s3=e:s4=e:s5=e:s6=e:s7=e:goto650
+  550 s1=c:s2=c:s3=c:s4=c:s5=c:s6=e:s7=c:goto650
+  560 s1=e:s2=c:s3=e:s4=c:s5=e:s6=e:s7=e:goto650
+  570 s1=e:s2=c:s3=c:s4=e:s5=c:s6=c:s7=c:goto650
+  580 s1=e:s2=c:s3=e:s4=c:s5=c:s6=c:s7=c:goto650
+  590 s1=c:s2=c:s3=e:s4=c:s5=e:s6=c:s7=e:goto650
+  600 s1=c:s2=e:s3=e:s4=c:s5=c:s6=c:s7=c:goto650
+  610 s1=c:s2=e:s3=c:s4=c:s5=c:s6=c:s7=c:goto650
+  620 s1=e:s2=c:s3=e:s4=c:s5=c:s6=e:s7=e:goto650
+  630 s1=c:s2=c:s3=c:s4=c:s5=c:s6=c:s7=c:goto650
+  640 s1=c:s2=c:s3=e:s4=c:s5=c:s6=c:s7=c
+  650 d=b*10:v1=320+d+f:v2=520+d+f:v3=282+d+f:v4=482+d+f:v5=682+d+f
+  660 forx=1to160step40
+  670 pokez+v1+x,s1:pokel+v1+x,r:pokez+v1+x+6,s2:pokel+v1+x+6,r
+  680 pokez+v2+x,s3:pokel+v2+x,r:pokez+v2+x+6,s4:pokel+v2+x+6,r:next
+  690 forx=.to4:pokez+v3+x,s5:pokel+v3+x,q:pokez+v4+x,s6:pokel+v4+x,q
+  700 pokez+v5+x,s7:pokel+v5+x,q:next
+  710 printchr$(19):goto330
+  715 rem keyboard commands
+  720 poke646,c
+  730 ifs$="?"ors$="/"then1090
+  740 ifs$="t"thensp$="enter 24 hr:hhmmss":w1=4:rv$=ti$
+  750 ifs$="t"thengosub2680:i$=bs$:iflen(i$)<>6then220
+  760 ifs$="t"thenti$=i$:goto220
+  770 ifs$="1"thenm=1
+  780 ifs$="2"thenm=2:d$="24 hour"
+  790 ifs$="3"thenm=4:d$=" metric"
+  800 ifs$="4"thenm=3:d$="  % day"
+  810 ifs$="5"thenq=67:r=66:c=1:k=66:j=c:e=.:cs=.:dm=.:n=c:cc=c
+  820 ifs$="6"thenq=250:r=250:c=.:k=250:j=c:e=11:cs=.:dm=.:n=c:cc=c
+  830 ifs$="7"thenq=81:r=81:c=2:k=81:j=c:e=.:cs=.:dm=.:n=c:cc=c
+  840 ifs$="8"thenq=232:r=220:c=12:k=220:j=c:e=.:cs=.:dm=.:n=c:cc=c
+  850 ifs$="9"thenc=5:k=81:j=c:e=.:cs=.:dm=1:n=c:cc=c
+  860 ifs$="0"thenc=8:k=81:j=c:e=.:cs=8:dm=1:n=c:cc=c
+  870 ifs$=":"thensp$=": blink rate (0-255)":w1=2:rv=i:gosub2680:i=rv
+  880 ifs$="@"thensp$=": color (0-15)":w1=.:rv=cc:gosub2680:cc=rv
+  890 ifs$="*"thensp$=":character":w1=2:rv=k:gosub2680:k=rv
+  900 ifs$="c"thensp$="number color":w1=.:rv=c:gosub2680:c=rv:cc=rv:j=c
+  910 ifs$="g"thensp$="screen color":w1=.:rv=e:gosub2680:e=rv:j=e
+  920 ifs$="b"thensp$="border color":w1=.:rv=cs:gosub2680:cs=rv
+  930 ifs$="p"thenw1=3:sp$="screen burn protect y/n":rv$=bn$:gosub2680
+  940 ifs$="p"thenbn$=bs$
+  950 ifs$="p"thenifbn$="n"thenf=.:xc=.:m1=3:m2=8
+  960 ifs$="z"thenw1=3:sp$="show leading zero y/n":rv$=zb$:gosub2680
+  970 ifs$="z"thenzb$=bs$
+  980 ifs$="m"thensp$="complications color":w1=.:rv=n:gosub2680:n=rv
+  990 ifs$="h"thenifdm=1then1080
+ 1000 ifs$="h"thensp$="horzontal segment":w1=2:rv=q:gosub2680:q=rv
+ 1010 ifs$="v"thenifdm=1then1080
+ 1020 ifs$="v"thensp$="vertical segment":w1=2:rv=r:gosub2680:r=rv
+ 1030 ifs$="s"thenbs$="":sp$="save theme":w1=1:ld=15:gosub2680:goto1430
+ 1040 ifs$="l"thenbs$="":sp$="load theme":w1=1:ld=15:gosub2680:goto1560
+ 1050 ifs$="w"thenw1=1:sp$="enter text":rv$=e$:ld=30:gosub2680:e$=bs$:bs$=""
+ 1060 ifs$="e"thenw1=.:sp$="enter text color":rv=n1:gosub2680:n1=rv
+ 1070 ifs$="r"thene=.:goto130
+ 1075 rem redraw after a setting change
+ 1080 printchr$(19):pokec1,e:pokec2,cs:f=.:m1=3:m2=8:rs$="":bs$="":goto220
+ 1090 printchr$(147):poke646,c
+ 1100 print"while clock is running:":print
+ 1110 print"(clr/home) clear input"
+ 1120 print"(?/)  show this page"
+ 1130 print"(t)   set time 24 hr:hhmmss"
+ 1140 print"(1/2) 12/24 hour time"
+ 1150 print"(3/4) metric/percent of day time"
+ 1160 print"(5-8) segment clock themes"
+ 1170 print"(9/0) dot matrix clock themes"
+ 1180 print"(c)   number color (0-15)
+ 1190 print"(g/b) screen/border colors (0-15)"
+ 1200 print"(m)   complications color (0-15)"
+ 1210 print"(w/e) input text/color (30 chrs)"
+ 1220 print"(p)   screen protection"
+ 1230 print"(z)   show leading zero"
+ 1240 print"(:)   : blink rate (0=static)"
+ 1250 print"(*/@) : character/color"
+ 1260 print"(h)   horizontal segment (default=224)"
+ 1270 print"(v)   vertical segment (default=224)"
+ 1280 print"(s/l) save/load custom theme"
+ 1290 print"(r)   reset with defaults"
+ 1300 printspc(64)"any key to exit"
+ 1310 getr$:ifr$=""then1310
+ 1320 f=.:m1=3:m2=8:goto220
+ 1330 xc=xc+1:ifxc=9thenxc=1
+ 1340 onxcgoto1350,1360,1370,1380,1390,1400,1410,1420
+ 1350 f=.:m1=3:m2=8:goto220
+ 1360 f=-79:m1=4:m2=6:goto220
+ 1370 f=-40:m1=3:m2=7:goto220
+ 1380 f=-39:m1=4:m2=7:goto220
+ 1390 f=-80:m1=3:m2=6:goto220
+ 1400 f=1:m1=4:m2=8:goto220
+ 1410 f=40:m1=3:m2=9:goto220
+ 1420 f=41:m1=4:m2=9:goto220
+ 1425 rem save/load custom theme on device 8
+ 1430 n$="@"+bs$:iflen(bs$)=.then1080
+ 1440 open15,8,15:print#15,"ui":input#15,x,er$,x,x:x=.
+ 1450 ifleft$(er$,3)<>"cbm"thendf$="not a cbm drive":close15:goto1530
+ 1460 close15
+ 1470 open15,8,15:close15:ifstthendf$="drive error":goto1530
+ 1480 open15,8,15,"s0:"+n$
+ 1490 open2,8,2,"0:"+n$+",s,w"
+ 1500 print#2,q,f$,r,f$,c,f$,k,f$,j,f$,e,f$,m,f$,i,f$,cs,f$,dm,f$,n,f$,n1,f$,cc
+ 1510 print#2,bn$,f$,zb$,f$,e$,f$:close2
+ 1520 input#15,x,df$:close15:ifx=.then1550
+ 1530 printchr$(145)df$+":press a key":df$=""
+ 1540 getx$:ifx$=""then1540
+ 1550 goto1080
+ 1560 n$="@"+bs$:iflen(bs$)=.then1080
+ 1570 open15,8,15:print#15,"ui":input#15,x,er$,x,x:x=.
+ 1580 ifleft$(er$,3)<>"cbm"thendf$="not a cbm drive":close15:goto1660
+ 1590 close15
+ 1600 open15,8,15:close15:ifstthendf$="drive error":goto1660
+ 1610 open15,8,15
+ 1620 open2,8,2,"0:"+n$+",s,r"
+ 1630 input#15,x,df$:ifx>.thenclose2:close15:goto1660
+ 1640 input#2,q,r,c,k,j,e,m,i,cs,dm,n,n1,cc,bn$,zb$,e$
+ 1650 close2:close15:goto1680
+ 1660 printchr$(19)df$+":press a key";
+ 1670 getx$:ifx$=""then1670
+ 1680 bn$=left$(bn$,1)
+ 1690 zb$=left$(zb$,1)
+ 1700 e$=left$(e$,30)
+ 1710 ifm=2thend$="24 hour"
+ 1720 ifm=4thend$=" metric"
+ 1730 ifm=3thend$="  % day"
+ 1740 goto1080
+ 1745 rem title screen
+ 1750 pokec1,e:pokec2,cs:printchr$(147):poke646,13
+ 1760 print:printspc(9)"segment/dot matrix clock":print:print
+ 1770 poke646,7:printspc(12)"(?/) key for help":print
+ 1780 poke646,5:printspc(11)"* any key to exit *":print:print
+ 1790 poke646,14:printspc(9)"features:":print
+ 1800 printspc(7)"- four time-display modes"
+ 1810 printspc(7)"- segment or dot matrix clock"
+ 1820 printspc(7)"- six themes to edit"
+ 1830 printspc(7)"- change colors & characters"
+ 1840 printspc(9)"using chr$ & screen codes"
+ 1850 printspc(7)"- save & load custom themes"
+ 1860 printspc(7)"- screen burn protection":print:print:print
+ 1870 poke646,11:printspc(9)"steven hardison 2026"
+ 1880 getw$:ifw$=""then1880
+ 1890 return
+ 1900 ifb=.thenifzb$="n"then1980
+ 1910 printspc(d)" QQQQ "
+ 1920 printspc(d)"QQ  QQ"
+ 1930 printspc(d)"QQ  QQ"
+ 1940 printspc(d)"QQ  QQ"
+ 1950 printspc(d)"QQ  QQ "
+ 1960 printspc(d)"QQ  QQ"
+ 1970 printspc(d)" QQQQ ":goto330
+ 1980 printspc(d)"      "
+ 1990 printspc(d)"      "
+ 2000 printspc(d)"      "
+ 2010 printspc(d)"      "
+ 2020 printspc(d)"       "
+ 2030 printspc(d)"      "
+ 2040 printspc(d)"      ":goto330
+ 2050 printspc(d)"   QQ "
+ 2060 printspc(d)" QQQQ "
+ 2070 printspc(d)"   QQ "
+ 2080 printspc(d)"   QQ "
+ 2090 printspc(d)"   QQ  "
+ 2100 printspc(d)"   QQ "
+ 2110 printspc(d)" QQQQQ":goto330
+ 2120 printspc(d)" QQQQ "
+ 2130 printspc(d)"QQ  QQ"
+ 2140 printspc(d)"    QQ"
+ 2150 printspc(d)"   QQ "
+ 2160 printspc(d)" QQ    "
+ 2170 printspc(d)"QQ  QQ"
+ 2180 printspc(d)"QQQQQQ":goto330
+ 2190 printspc(d)" QQQQ "
+ 2200 printspc(d)"QQ  QQ"
+ 2210 printspc(d)"    QQ"
+ 2220 printspc(d)"  QQQ "
+ 2230 printspc(d)"    QQ "
+ 2240 printspc(d)"QQ  QQ"
+ 2250 printspc(d)" QQQQ ":goto330
+ 2260 printspc(d)"    QQ"
+ 2270 printspc(d)"   QQQ"
+ 2280 printspc(d)"  Q QQ"
+ 2290 printspc(d)" Q  QQ"
+ 2300 printspc(d)"QQQQQQQ"
+ 2310 printspc(d)"    QQ"
+ 2320 printspc(d)"    QQ":goto330
+ 2330 printspc(d)"QQQQQQ"
+ 2340 printspc(d)"QQ    "
+ 2350 printspc(d)"QQQQQ "
+ 2360 printspc(d)"    QQ"
+ 2370 printspc(d)"    QQ "
+ 2380 printspc(d)"QQ  QQ"
+ 2390 printspc(d)" QQQQ ":goto330
+ 2400 printspc(d)" QQQQ "
+ 2410 printspc(d)"QQ  QQ"
+ 2420 printspc(d)"QQ    "
+ 2430 printspc(d)"QQQQQ "
+ 2440 printspc(d)"QQ  QQ "
+ 2450 printspc(d)"QQ  QQ"
+ 2460 printspc(d)" QQQQ ":goto330
+ 2470 printspc(d)"QQQQQQ"
+ 2480 printspc(d)"QQ  QQ"
+ 2490 printspc(d)"    QQ"
+ 2500 printspc(d)"   QQ "
+ 2510 printspc(d)"  QQ   "
+ 2520 printspc(d)"  QQ  "
+ 2530 printspc(d)"  QQ  ":goto330
+ 2540 printspc(d)" QQQQ "
+ 2550 printspc(d)"QQ  QQ"
+ 2560 printspc(d)"QQ  QQ"
+ 2570 printspc(d)" QQQQ "
+ 2580 printspc(d)"QQ  QQ "
+ 2590 printspc(d)"QQ  QQ"
+ 2600 printspc(d)" QQQQ ":goto330
+ 2610 printspc(d)" QQQQ "
+ 2620 printspc(d)"QQ  QQ"
+ 2630 printspc(d)"QQ  QQ"
+ 2640 printspc(d)" QQQQQ"
+ 2650 printspc(d)"    QQ "
+ 2660 printspc(d)"QQ  QQ"
+ 2670 printspc(d)" QQQQ ":goto330
+ 2675 rem validated input routine
+ 2680 poke646,c:poke214,.:print:poke211,.
+ 2690 ifw1=.ands$<>":"thenprintchr$(147):gosub2980:s$=":":goto2680
+ 2700 printsp$:print">":bs$=""
+ 2710 getin$:ifin$=""then2710
+ 2720 ifin$=chr$(13)then2930
+ 2730 ifin$=chr$(19)thenpoke214,1:print:poke211,.
+ 2740 ifin$=chr$(19)thenprint">                                 ":bs$="":goto2710
+ 2750 ifw1=1thenifin$=chr$(20)thenprint">"bs$:goto2880
+ 2760 ifw1=.orw1=4thenifin$<chr$(48)orin$>chr$(57)then2710
+ 2770 ifw1=3thenifin$<>"y"andin$<>"n"then2710
+ 2780 ifw1<>1thenifin$=chr$(32)then2710
+ 2790 ifin$<chr$(32)orin$>chr$(90)then2710
+ 2800 ifin$=chr$(20)thenbs$=left$(bs$,len(bs$)-1):goto2710
+ 2810 bs$=bs$+in$
+ 2820 ifw1=.theniflen(bs$)>2then2880
+ 2830 ifw1=1theniflen(bs$)>ldorlen(bs$)<1then2880
+ 2840 ifw1=2theniflen(bs$)>3then2880
+ 2850 ifw1=3theniflen(bs$)>1then2880
+ 2860 ifw1=4theniflen(bs$)>6then2880
+ 2870 goto2890
+ 2880 iflen(bs$)>.thenbs$=left$(bs$,len(bs$)-1)
+ 2890 poke214,1:print:poke211,1
+ 2900 printbs$"  ";
+ 2910 ifw1=1thenprintld-len(bs$)chr$(157)"  "chr$(145)
+ 2920 goto2710
+ 2930 ifw1=.thenifval(bs$)>15thenbs$="":return
+ 2940 ifw1=2thenifval(bs$)>255thenbs$="":return
+ 2950 ifw1=.orw1=2thenifbs$>""thenrv=val(bs$):bs$=""
+ 2960 ifw1=1orw1=3orw1=4thenifbs$=""thenbs$=rv$
+ 2970 return
+ 2980 print:print:print
+ 2990 print"0=black    8=orange
+ 3000 print"1=white    9=brown
+ 3010 print"2=red     10=lt red
+ 3020 print"3=cyan    11=gray 1
+ 3030 print"4=purple  12=gray 2
+ 3040 print"5=green   13=lt green
+ 3050 print"6=blue    14=lt blue
+ 3060 print"7=yellow  15=gray 3
